@@ -42,6 +42,7 @@
 #include "AscensionReaperSoulStrike.h"
 #include "AscensionReaperDeathwind.h"
 #include "AscensionReaperPainmail.h"
+#include "AscensionReaperScytheRush.h"
 #include "AscensionVenomancerCatalyst.h"
 #include "AscensionSpellProgressionData.h"
 #include "AscensionTalentReplacementData.h"
@@ -125,6 +126,9 @@ constexpr uint32 SPELL_REAPER_SOUL_INFUSION = 803031;
 constexpr uint32 SPELL_REAPER_SOUL_INFUSION_REMOVER = 561290;
 constexpr uint32 SPELL_REAPER_SOUL_FRAGMENT = 805077;
 constexpr uint32 SPELL_REAPER_GENERATE_SOUL = 805078;
+constexpr uint32 SPELL_REAPER_SCYTHE_RUSH = 500359;
+// The 20 second per-target marker Scythe Rush's hit adapter applies through helper 805339.
+constexpr uint32 SPELL_REAPER_SCYTHE_RUSH_MARKER = 500377;
 constexpr char ASCENSION_LOCAL_RESOURCE_PREFIX[] = "ASC_LOCAL_RESOURCE";
 constexpr char ASCENSION_ACTIVE_SPEC_SETTING[] = "core.ascension_active_spec";
 
@@ -1615,6 +1619,22 @@ public:
             // talent consumer follows the same requirement.
             result = SPELL_FAILED_CASTER_AURASTATE;
             return;
+        }
+
+        if (player->getClass() == CLASS_REAPER && spellId == SPELL_REAPER_SCYTHE_RUSH)
+        {
+            // "Cannot be used on the same target more than once every 20 sec."
+            // 500359's own ExcludeTargetAuraSpell is empty, and the native
+            // field would also ignore the aura's caster, locking every other
+            // Reaper out of a target one of them has already rushed. Keep the
+            // marker's own per-caster scope instead.
+            Unit* target = spell->m_targets.GetUnitTarget();
+            if (target && target->HasAura(SPELL_REAPER_SCYTHE_RUSH_MARKER,
+                    player->GetGUID()))
+            {
+                result = SPELL_FAILED_TARGET_AURASTATE;
+                return;
+            }
         }
 
         for (AscensionCompatData::ResourceCostRule const& rule :
@@ -4335,7 +4355,7 @@ public:
                         spellInfo->Effects[EFFECT_2].ApplyAuraName == SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED &&
                         !spellInfo->HasAttribute(SPELL_ATTR4_ONLY_FLYING_AREAS))
                     {
-                        spellInfo->Effects[EFFECT_2].Effect = SPELL_EFFECT_NONE;
+                        spellInfo->Effects[EFFECT_2].Effect = 0;
                         spellInfo->Effects[EFFECT_2].ApplyAuraName = SPELL_AURA_NONE;
                         spellInfo->Effects[EFFECT_2].BasePoints = 0;
                     }
@@ -4354,6 +4374,7 @@ public:
             ApplyAscensionChronomancerTalentContracts(spellInfo);
             ApplyAscensionVenomancerCatalystContract(spellInfo);
             ApplyAscensionReaperDeathwindContracts(spellInfo);
+            ApplyAscensionReaperScytheRushContracts(spellInfo);
         }
     }
 };
