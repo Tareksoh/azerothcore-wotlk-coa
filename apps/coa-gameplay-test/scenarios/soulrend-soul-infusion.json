@@ -36,7 +36,7 @@
 
     { "action": "set_aura", "actor": "reaper", "spell": 500363, "stacks": 3 },
     { "action": "set_aura", "actor": "reaper", "spell": 803031, "stacks": 1 },
-    { "action": "assert", "actor": "reaper", "metric": "aura", "spell": 500363, "equals": 3 },
+    { "action": "assert", "actor": "reaper", "metric": "aura_stacks", "spell": 500363, "equals": 3 },
     { "action": "assert", "actor": "reaper", "metric": "aura", "spell": 803031, "equals": 1 },
     { "action": "set_power", "actor": "reaper", "power": 6, "value": 0 },
     { "action": "snapshot", "actor": "enemy", "metric": "health", "save_as": "before_hit" },
